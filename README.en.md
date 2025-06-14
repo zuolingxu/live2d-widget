@@ -1,4 +1,7 @@
-# Live2D Widget
+# A fork of [Live2D Widget](https://github.com/stevenjoezhang/live2d-widget)
+
+---
+The following part is the README file content of original repository:
 
 ![](https://forthebadge.com/images/badges/built-with-love.svg)
 ![](https://forthebadge.com/images/badges/made-with-typescript.svg)

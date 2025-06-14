@@ -1,4 +1,8 @@
-# Live2D Widget
+# A fork of [Live2D Widget](https://github.com/stevenjoezhang/live2d-widget)
+
+
+---
+剩下的部分是对原仓库自述文档：
 
 ![](https://forthebadge.com/images/badges/built-with-love.svg)
 ![](https://forthebadge.com/images/badges/made-with-typescript.svg)
