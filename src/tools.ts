@@ -78,36 +78,6 @@ class ToolsManager {
         }
       },
       {
-        name: 'Switch Model',
-        icon: fa_street_view,
-        callback: () => {}
-      },
-      {
-        name: 'Switch Texture',
-        icon: fa_shirt,
-        callback: () => { }
-      },
-      {
-        name: 'Take Photo',
-        icon: fa_camera_retro,
-        callback: () => {
-          const message = tips.message.photo;
-          showMessage(message, 6000, 9);
-          const canvas = document.getElementById('live2d') as HTMLCanvasElement;
-          if (!canvas) return;
-          const imageUrl = canvas.toDataURL();
-
-          const link = document.createElement('a');
-          link.style.display = 'none';
-          link.href = imageUrl;
-          link.download = 'live2d-photo.png';
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      },
-      {
         name: 'Info',
         icon: fa_info_circle,
         callback: () => {
@@ -119,8 +89,8 @@ class ToolsManager {
         icon: fa_xmark,
         callback: () => {
           localStorage.setItem('waifu-display', Date.now().toString());
-          const message = tips.message.goodbye;
-          showMessage(message, 2000, 11);
+          // const message = tips.message.goodbye;
+          // showMessage(message, 2000, 11);
           const waifu = document.getElementById('waifu');
           if (!waifu) return;
           waifu.classList.remove('waifu-active');
@@ -128,40 +98,45 @@ class ToolsManager {
             waifu.classList.add('waifu-hidden');
             const waifuToggle = document.getElementById('waifu-toggle');
             waifuToggle?.classList.add('waifu-toggle-active');
-          }, 3000);
+          }, 0);
         }
       }
     ]
   }
 
-  addNewElement(name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
+  addNewElement(pos: number, name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
     const element = document.createElement('span');
-    element.id = `waifu-tool-${Object.keys(this.tools).length}`;
+    element.id = `waifu-tool-${pos}`;
     element.innerHTML = icon;
     element.addEventListener('click', callback);
 
+    const toolContainer = document.getElementById('waifu-tool');
+    if (!toolContainer) return element;
+
+    // Find the next tool position
+    const nextTool = document.getElementById(`waifu-tool-${pos + 1}`);
+
     // delete element first
     const existingTool = document.getElementById(element.id);
-    if (existingTool)
+    if (existingTool) {
+      // Store the next sibling before removing
+      const insertBefore = existingTool.nextElementSibling;
       existingTool.remove();
 
-    // add new element
-    document
-      .getElementById('waifu-tool')
-      ?.insertAdjacentElement(
-        'beforeend',
-        element,
-      );
+      // Insert at the original position
+      toolContainer.insertBefore(element, insertBefore);
+    } else {
+      // If no existing tool, insert before the next tool or at the end
+      toolContainer.insertBefore(element, nextTool || null);
+    }
 
     return element;
   }
 
   public loadTools() {
-    for (const toolPos of Object.keys(this.tools)) {
-      if (this.tools[toolPos]) {
-        const {name, icon, callback } = this.tools[toolPos];
-        this.addNewElement(name, icon, callback);
-      }
+    for (let i = 0; i < this.tools.length; i++) {
+      const { name, icon, callback } = this.tools[i];
+      this.addNewElement(i, name, icon, callback);
     }
   }
 
@@ -170,7 +145,7 @@ class ToolsManager {
       console.log(`Overwriting tool at position ${pos}, previously: ${instance.tools[pos].name}`);
     }
     instance.tools[pos] =  new_tool;
-    instance.addNewElement(new_tool.name, new_tool.icon, new_tool.callback);
+    instance.addNewElement(pos, new_tool.name, new_tool.icon, new_tool.callback);
   }
 }
 

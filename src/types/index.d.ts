@@ -4,4 +4,3 @@
  */
 export * from './live2dApi';
 export * from './window';
-export * from '.';
