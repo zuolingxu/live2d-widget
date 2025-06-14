@@ -13,39 +13,42 @@ import {
   fa_xmark
 } from './icons.js';
 import { showMessage, i18n } from './message.js';
-import type { Config, ModelManager } from './model.js';
+import type { ModelManager } from './model.js';
 import type { Tips } from './widget.js';
 
-interface Tools {
-  /**
-   * Key-value pairs of tools, where the key is the tool name.
-   * @type {string}
-   */
-  [key: string]: {
+interface Tool {
     /**
-     * Icon of the tool, usually an SVG string.
+     * Tool name.
      * @type {string}
      */
-    icon: string;
+    name: string,
+    /**
+     * Tool icon, usually an SVG string.
+     * @type {string}
+     */
+    icon: string,
     /**
      * Callback function for the tool.
      * @type {() => void}
      */
-    callback: (message: any) => void;
-  };
+    callback: (message: any) => void,
 }
 
 /**
  * Waifu tools manager.
  */
 class ToolsManager {
-  tools: Tools;
-  config: Config;
+  tools: Tool[];
 
-  constructor(model: ModelManager, config: Config, tips: Tips) {
-    this.config = config;
-    this.tools = {
-      hitokoto: {
+  constructor(model: ModelManager, tips: Tips) {
+    this.tools = [
+      /**
+         * Tool list, each tool has a name, icon and callback function.
+         * The callback function will be called when the tool is clicked.
+         * @type {Tool[]}
+         */
+      {
+        name: 'Hitokoto',
         icon: fa_comment,
         callback: async () => {
           // Add hitokoto.cn API
@@ -59,7 +62,8 @@ class ToolsManager {
           }, 6000);
         }
       },
-      asteroids: {
+      {
+        name: 'Asteroids',
         icon: fa_paper_plane,
         callback: () => {
           if (window.Asteroids) {
@@ -68,16 +72,18 @@ class ToolsManager {
           } else {
             const script = document.createElement('script');
             script.src =
-              'https://fastly.jsdelivr.net/gh/stevenjoezhang/asteroids/asteroids.js';
+                'https://fastly.jsdelivr.net/gh/stevenjoezhang/asteroids/asteroids.js';
             document.head.appendChild(script);
           }
         }
       },
-      'switch-model': {
+      {
+        name: 'Switch Model',
         icon: fa_street_view,
         callback: () => model.loadNextModel()
       },
-      'switch-texture': {
+      {
+        name: 'Switch Texture',
         icon: fa_shirt,
         callback: () => {
           let successMessage = '', failMessage = '';
@@ -88,7 +94,8 @@ class ToolsManager {
           model.loadRandTexture(successMessage, failMessage);
         }
       },
-      photo: {
+      {
+        name: 'Take Photo',
         icon: fa_camera_retro,
         callback: () => {
           const message = tips.message.photo;
@@ -107,13 +114,15 @@ class ToolsManager {
           document.body.removeChild(link);
         }
       },
-      info: {
+      {
+        name: 'Info',
         icon: fa_info_circle,
         callback: () => {
           open('https://github.com/stevenjoezhang/live2d-widget');
         }
       },
-      quit: {
+      {
+        name: 'Quit',
         icon: fa_xmark,
         callback: () => {
           localStorage.setItem('waifu-display', Date.now().toString());
@@ -129,29 +138,48 @@ class ToolsManager {
           }, 3000);
         }
       }
-    };
+    ]
   }
 
-  registerTools() {
-    if (!Array.isArray(this.config.tools)) {
-      this.config.tools = Object.keys(this.tools);
-    }
-    for (const toolName of this.config.tools) {
-      if (this.tools[toolName]) {
-        const { icon, callback } = this.tools[toolName];
-        const element = document.createElement('span');
-        element.id = `waifu-tool-${toolName}`;
-        element.innerHTML = icon;
-        document
-          .getElementById('waifu-tool')
-          ?.insertAdjacentElement(
-            'beforeend',
-            element,
-          );
-        element.addEventListener('click', callback);
+  addNewElement(name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
+    const element = document.createElement('span');
+    element.id = `waifu-tool-${Object.keys(this.tools).length}`;
+    element.innerHTML = icon;
+    element.addEventListener('click', callback);
+
+    // delete element first
+    const existingTool = document.getElementById(element.id);
+    if (existingTool)
+      existingTool.remove();
+
+    // add new element
+    document
+      .getElementById('waifu-tool')
+      ?.insertAdjacentElement(
+        'beforeend',
+        element,
+      );
+
+    return element;
+  }
+
+  public loadTools() {
+    for (const toolPos of Object.keys(this.tools)) {
+      if (this.tools[toolPos]) {
+        const {name, icon, callback } = this.tools[toolPos];
+        this.addNewElement(name, icon, callback);
       }
     }
   }
+
+  public static registerTool(instance: ToolsManager, pos:number, new_tool: Tool) {
+    if (instance.tools[pos]) {
+      console.log(`Overwriting tool at position ${pos}, previously: ${instance.tools[pos].name}`);
+    }
+    instance.tools[pos] =  new_tool;
+    instance.addNewElement(new_tool.name, new_tool.icon, new_tool.callback);
+  }
 }
 
-export { ToolsManager, Tools };
+
+export { ToolsManager, Tool};

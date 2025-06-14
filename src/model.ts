@@ -52,11 +52,6 @@ interface Config {
    */
   modelId?: number;
   /**
-   * List of tools to display.
-   * @type {string[] | undefined}
-   */
-  tools?: string[];
-  /**
    * Support for dragging the waifu.
    * @type {boolean | undefined}
    */

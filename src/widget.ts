@@ -11,6 +11,7 @@ import logger from './logger.js';
 import registerDrag from './drag.js';
 import { fa_child } from './icons.js';
 
+
 interface Tips {
   /**
    * Default message configuration.
@@ -196,9 +197,11 @@ async function loadWidget(config: Config) {
   }
   const model = await ModelManager.initCheck(config, models);
   await model.loadModel('');
-  new ToolsManager(model, config, tips).registerTools();
+  const tools = new ToolsManager(model, tips)
+  tools.loadTools();
   if (config.drag) registerDrag();
   document.getElementById('waifu')?.classList.add('waifu-active');
+  return { 'ModelManager': model,'ToolsManager': tools }
 }
 
 /**
@@ -206,6 +209,7 @@ async function loadWidget(config: Config) {
  * @param {string | Config} config - Waifu configuration or configuration path.
  */
 function initWidget(config: string | Config) {
+  let globals;
   if (typeof config === 'string') {
     logger.error('Your config for Live2D initWidget is outdated. Please refer to https://github.com/stevenjoezhang/live2d-widget/blob/master/dist/autoload.js');
     return;
@@ -221,7 +225,7 @@ function initWidget(config: string | Config) {
   toggle?.addEventListener('click', () => {
     toggle?.classList.remove('waifu-toggle-active');
     if (toggle?.getAttribute('first-time')) {
-      loadWidget(config as Config);
+      globals = loadWidget(config as Config);
       toggle?.removeAttribute('first-time');
     } else {
       localStorage.removeItem('waifu-display');
@@ -240,8 +244,9 @@ function initWidget(config: string | Config) {
       toggle?.classList.add('waifu-toggle-active');
     }, 0);
   } else {
-    loadWidget(config as Config);
+    globals = loadWidget(config as Config);
   }
+  return globals;
 }
 
 export { initWidget, Tips };

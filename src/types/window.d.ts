@@ -1,3 +1,4 @@
+
 /**
  * @file Define the type of the global window object.
  * @module types/window
@@ -18,4 +19,8 @@ interface Window {
    * @type {(config: Config) => void}
    */
   initWidget: (config: Config) => void;
+  /*
+   * expose singletons
+   */
+  changeTool: (instance: ToolsManager , index: number, new_tool: any) => void;
 }
