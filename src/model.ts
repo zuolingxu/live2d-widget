@@ -3,18 +3,13 @@
  * @module model
  */
 
-import { showMessage } from './message.js';
-import { loadExternalResource, randomOtherOption } from './utils.js';
+import {showMessage} from './message.js';
+import {loadExternalResource} from './utils.js';
 import type Cubism2Model from './cubism2/index.js';
-import type { AppDelegate as Cubism5Model } from './cubism5/index.js';
-import logger, { LogLevel } from './logger.js';
+import type {AppDelegate as Cubism5Model} from './cubism5/index.js';
+import logger, {LogLevel} from './logger.js';
 
-interface ModelListCDN {
-  messages: string[];
-  models: string | string[];
-}
-
-interface ModelList {
+interface Model {
   name: string;
   paths: string[];
   message: string;
@@ -27,17 +22,13 @@ interface Config {
    */
   waifuPath: string;
   /**
-   * Path to the API, if you need to load models via API.
-   * @type {string | undefined}
+   * Path to local model
    */
-  apiPath?: string;
+  modelPath?: string;
+  /** Path to model setting */
+  modelSetting?: string;
   /**
-   * Path to the CDN, if you need to load models via CDN.
-   * @type {string | undefined}
-   */
-  cdnPath?: string;
-  /**
-   * Path to Cubism 2 Core, if you need to load Cubism 2 models.
+   * Path to Cubism 2 Core
    * @type {string | undefined}
    */
   cubism2Path?: string;
@@ -46,11 +37,6 @@ interface Config {
    * @type {string | undefined}
    */
   cubism5Path?: string;
-  /**
-   * Default model id.
-   * @type {string | undefined}
-   */
-  modelId?: number;
   /**
    * Support for dragging the waifu.
    * @type {boolean | undefined}
@@ -67,130 +53,56 @@ interface Config {
  * Waifu model class, responsible for loading and managing models.
  */
 class ModelManager {
-  public readonly useCDN: boolean;
-  private readonly cdnPath: string;
   private readonly cubism2Path: string;
   private readonly cubism5Path: string;
-  private _modelId: number;
-  private _modelTexturesId: number;
-  private modelList: ModelListCDN | null = null;
+  private modelPath: string;
+  private modelSetting: string;
+  private modelCurrentMotion: string | undefined;
+  private modelCurrentColor: string | undefined;
   private cubism2model: Cubism2Model | undefined;
   private cubism5model: Cubism5Model | undefined;
   private currentModelVersion: number;
   private loading: boolean;
-  private modelJSONCache: Record<string, any>;
-  private models: ModelList[];
+  private modelJSON: Record<string, any>;
 
   /**
    * Create a Model instance.
    * @param {Config} config - Configuration options
    */
-  private constructor(config: Config, models: ModelList[] = []) {
-    let { apiPath, cdnPath } = config;
+  private constructor(config: Config) {
     const { cubism2Path, cubism5Path } = config;
-    let useCDN = false;
-    if (typeof cdnPath === 'string') {
-      if (!cdnPath.endsWith('/')) cdnPath += '/';
-      useCDN = true;
-    } else if (typeof apiPath === 'string') {
-      if (!apiPath.endsWith('/')) apiPath += '/';
-      cdnPath = apiPath;
-      useCDN = true;
-      logger.warn('apiPath option is deprecated. Please use cdnPath instead.');
-    } else if (!models.length) {
-      throw 'Invalid initWidget argument!';
+    this.modelPath = config.modelPath || '';
+    if (this.modelPath && !this.modelPath.endsWith('/')) {
+      this.modelPath += '/';
     }
-    let modelId: number = parseInt(localStorage.getItem('modelId') as string, 10);
-    let modelTexturesId: number = parseInt(
-      localStorage.getItem('modelTexturesId') as string, 10
-    );
-    if (isNaN(modelId) || isNaN(modelTexturesId)) {
-      modelTexturesId = 0;
-    }
-    if (isNaN(modelId)) {
-      modelId = config.modelId ?? 0;
-    }
-    this.useCDN = useCDN;
-    this.cdnPath = cdnPath || '';
+    this.modelSetting = config.modelSetting || '';
     this.cubism2Path = cubism2Path || '';
     this.cubism5Path = cubism5Path || '';
-    this._modelId = modelId;
-    this._modelTexturesId = modelTexturesId;
     this.currentModelVersion = 0;
     this.loading = false;
-    this.modelJSONCache = {};
-    this.models = models;
+    this.modelJSON = {};
   }
 
-  public static async initCheck(config: Config, models: ModelList[] = []) {
-    const model = new ModelManager(config, models);
-    if (model.useCDN) {
-      const response = await fetch(`${model.cdnPath}model_list.json`);
-      model.modelList = await response.json();
-      if (model.modelId >= model.modelList.models.length) {
-        model.modelId = 0;
-      }
-      const modelName = model.modelList.models[model.modelId];
-      if (Array.isArray(modelName)) {
-        if (model.modelTexturesId >= modelName.length) {
-          model.modelTexturesId = 0;
-        }
-      } else {
-        const modelSettingPath = `${model.cdnPath}model/${modelName}/index.json`;
-        const modelSetting = await model.fetchWithCache(modelSettingPath);
-        const version = model.checkModelVersion(modelSetting);
-        if (version === 2) {
-          const textureCache = await model.loadTextureCache(modelName);
-          if (model.modelTexturesId >= textureCache.length) {
-            model.modelTexturesId = 0;
-          }
-        }
-      }
-    } else {
-      if (model.modelId >= model.models.length) {
-        model.modelId = 0;
-      }
-      if (model.modelTexturesId >= model.models[model.modelId].paths.length) {
-        model.modelTexturesId = 0;
-      }
-    }
-    return model;
-  }
-
-  public set modelId(modelId: number) {
-    this._modelId = modelId;
-    localStorage.setItem('modelId', modelId.toString());
-  }
-
-  public get modelId() {
-    return this._modelId;
-  }
-
-  public set modelTexturesId(modelTexturesId: number) {
-    this._modelTexturesId = modelTexturesId;
-    localStorage.setItem('modelTexturesId', modelTexturesId.toString());
-  }
-
-  public get modelTexturesId() {
-    return this._modelTexturesId;
+  public static async newInstance(config: Config) {
+    return new ModelManager(config);
   }
 
   resetCanvas() {
     document.getElementById('waifu-canvas').innerHTML = '<canvas id="live2d" width="800" height="800"></canvas>';
   }
 
-  async fetchWithCache(url: string) {
+  async fetchWithCache(jsonPath: string) {
     let result;
-    if (url in this.modelJSONCache) {
-      result = this.modelJSONCache[url];
+    if (jsonPath in this.modelJSON) {
+      result = this.modelJSON[jsonPath];
     } else {
       try {
-        const response = await fetch(url);
+        const response = await fetch(jsonPath);
         result = await response.json();
       } catch {
         result = null;
       }
-      this.modelJSONCache[url] = result;
+      this.modelJSON[jsonPath] = result;
     }
     return result;
   }
@@ -203,6 +115,9 @@ class ModelManager {
   }
 
   async loadLive2D(modelSettingPath: string, modelSetting: object) {
+    logger.info(`loadLive2D start, modelSettingPath: ${modelSettingPath}
+    modelSetting: ${JSON.stringify(modelSetting)}`);
+
     if (this.loading) {
       logger.warn('Still loading. Abort.');
       return;
@@ -259,91 +174,36 @@ class ModelManager {
     this.loading = false;
   }
 
-  async loadTextureCache(modelName: string): Promise<any[]> {
-    const textureCache = await this.fetchWithCache(`${this.cdnPath}model/${modelName}/textures.cache`);
-    return textureCache || [];
-  }
-
   /**
    * Load the specified model.
    * @param {string | string[]} message - Loading message.
    */
   async loadModel(message: string | string[]) {
-    let modelSettingPath, modelSetting;
-    if (this.useCDN) {
-      let modelName = this.modelList.models[this.modelId];
-      if (Array.isArray(modelName)) {
-        modelName = modelName[this.modelTexturesId];
-      }
-      modelSettingPath = `${this.cdnPath}model/${modelName}/index.json`;
-      modelSetting = await this.fetchWithCache(modelSettingPath);
-      const version = this.checkModelVersion(modelSetting);
-      if (version === 2) {
-        const textureCache = await this.loadTextureCache(modelName);
-        let textures = textureCache[this.modelTexturesId];
-        if (typeof textures === 'string') textures = [textures];
-        modelSetting.textures = textures;
-      }
-    } else {
-      modelSettingPath = this.models[this.modelId].paths[this.modelTexturesId];
-      modelSetting = await this.fetchWithCache(modelSettingPath);
-    }
-    await this.loadLive2D(modelSettingPath, modelSetting);
+    logger.info('loadModel start');
+    const modelSettingJson = await this.fetchWithCache(this.modelPath + this.modelSetting);
+    await this.loadLive2D(this.modelPath, modelSettingJson);
     showMessage(message, 4000, 10);
+    logger.info('loadModel end');
   }
 
   /**
    * Load a random texture for the current model.
    */
-  async loadRandTexture(successMessage: string | string[] = '', failMessage: string | string[] = '') {
-    const { modelId } = this;
-    let noTextureAvailable = false;
-    if (this.useCDN) {
-      const modelName = this.modelList.models[modelId];
-      if (Array.isArray(modelName)) {
-        this.modelTexturesId = randomOtherOption(modelName.length, this.modelTexturesId);
-      } else {
-        const modelSettingPath = `${this.cdnPath}model/${modelName}/index.json`;
-        const modelSetting = await this.fetchWithCache(modelSettingPath);
-        const version = this.checkModelVersion(modelSetting);
-        if (version === 2) {
-          const textureCache = await this.loadTextureCache(modelName);
-          if (textureCache.length <= 1) {
-            noTextureAvailable = true;
-          } else {
-            this.modelTexturesId = randomOtherOption(textureCache.length, this.modelTexturesId);
-          }
-        } else {
-          noTextureAvailable = true;
-        }
-      }
-    } else {
-      if (this.models[modelId].paths.length === 1) {
-        noTextureAvailable = true;
-      } else {
-        this.modelTexturesId = randomOtherOption(this.models[modelId].paths.length, this.modelTexturesId);
-      }
-    }
-    if (noTextureAvailable) {
-      showMessage(failMessage, 4000, 10);
-    } else {
-      await this.loadModel(successMessage);
-    }
-  }
-
-  /**
-   * Load the next character's model.
-   */
-  async loadNextModel() {
-    this.modelTexturesId = 0;
-    if (this.useCDN) {
-      this.modelId = (this.modelId + 1) % this.modelList.models.length;
-      await this.loadModel(this.modelList.messages[this.modelId]);
-    } else {
-      this.modelId = (this.modelId + 1) % this.models.length;
-      await this.loadModel(this.models[this.modelId].message);
-    }
-  }
+  // async loadRandTexture(successMessage: string | string[] = '', failMessage: string | string[] = '') {
+  //   const { modelId } = this;
+  //   let noTextureAvailable = false;
+  //   if (this.models[modelId].paths.length === 1) {
+  //     noTextureAvailable = true;
+  //   } else {
+  //     this.modelTexturesId = randomOtherOption(this.models[modelId].paths.length, this.modelTexturesId);
+  //   }
+  //
+  //   if (noTextureAvailable) {
+  //     showMessage(failMessage, 4000, 10);
+  //   } else {
+  //     await this.loadModel(successMessage);
+  //   }
+  // }
 }
 
-export { ModelManager, Config, ModelList };
+export { ModelManager, Config, Model };

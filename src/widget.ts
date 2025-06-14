@@ -3,7 +3,7 @@
  * @module widget
  */
 
-import { ModelManager, Config, ModelList } from './model.js';
+import { ModelManager, Config, Model } from './model.js';
 import { showMessage, welcomeMessage, Time } from './message.js';
 import { randomSelection } from './utils.js';
 import { ToolsManager } from './tools.js';
@@ -76,7 +76,7 @@ interface Tips {
     date: string;
     text: string | string[];
   }[];
-  models: ModelList[];
+  models: Model[];
 }
 
 /**
@@ -174,6 +174,8 @@ function registerEventListener(tips: Tips) {
  * @param {Config} config - Waifu configuration.
  */
 async function loadWidget(config: Config) {
+  logger.info('loadWidget function starts');
+
   localStorage.removeItem('waifu-display');
   sessionStorage.removeItem('waifu-message-priority');
   document.body.insertAdjacentHTML(
@@ -186,19 +188,27 @@ async function loadWidget(config: Config) {
        <div id="waifu-tool"></div>
      </div>`,
   );
-  let models: ModelList[] = [];
   let tips: Tips | null;
-  if (config.waifuPath) {
-    const response = await fetch(config.waifuPath);
-    tips = await response.json();
-    models = tips.models;
-    registerEventListener(tips);
-    showMessage(welcomeMessage(tips.time, tips.message.welcome, tips.message.referrer), 7000, 11);
-  }
-  const model = await ModelManager.initCheck(config, models);
+
+  logger.info('main widget elements creating');
+
+  // EVENT TIPS REGISTER HERE
+  // if (config.modelPath) {
+  //   const response = await fetch(config.modelPath);
+  //   tips = await response.json();
+  //   registerEventListener(tips);
+  //   showMessage(welcomeMessage(tips.time, tips.message.welcome, tips.message.referrer), 7000, 11);
+  // }
+
+  logger.info('loading model and tools')
+
+  const model = await ModelManager.newInstance(config);
   await model.loadModel('');
   const tools = new ToolsManager(model, tips)
   tools.loadTools();
+
+  logger.info('model and tools initialized');
+
   if (config.drag) registerDrag();
   document.getElementById('waifu')?.classList.add('waifu-active');
   return { 'ModelManager': model,'ToolsManager': tools }
@@ -208,23 +218,28 @@ async function loadWidget(config: Config) {
  * Initialize the waifu widget.
  * @param {string | Config} config - Waifu configuration or configuration path.
  */
-function initWidget(config: string | Config) {
+function initWidget(config: Config) {
+  logger.info('init function starts');
+
   let globals;
   if (typeof config === 'string') {
     logger.error('Your config for Live2D initWidget is outdated. Please refer to https://github.com/stevenjoezhang/live2d-widget/blob/master/dist/autoload.js');
     return;
   }
-  logger.setLevel(config.logLevel);
   document.body.insertAdjacentHTML(
     'beforeend',
     `<div id="waifu-toggle">
        ${fa_child}
      </div>`,
   );
+
+  logger.info('toggle element creating');
+  
   const toggle = document.getElementById('waifu-toggle');
   toggle?.addEventListener('click', () => {
     toggle?.classList.remove('waifu-toggle-active');
     if (toggle?.getAttribute('first-time')) {
+      logger.info('First time toggle clicked, loading widget...');
       globals = loadWidget(config as Config);
       toggle?.removeAttribute('first-time');
     } else {
@@ -235,6 +250,9 @@ function initWidget(config: string | Config) {
       }, 0);
     }
   });
+  
+  logger.info('toggle element created');
+  
   if (
     localStorage.getItem('waifu-display') &&
     Date.now() - Number(localStorage.getItem('waifu-display')) <= 86400000
@@ -244,8 +262,11 @@ function initWidget(config: string | Config) {
       toggle?.classList.add('waifu-toggle-active');
     }, 0);
   } else {
+    logger.info('Loading widget without first-time toggle');
     globals = loadWidget(config as Config);
   }
+
+  logger.info('init function ends');
   return globals;
 }
 

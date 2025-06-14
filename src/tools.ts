@@ -80,19 +80,12 @@ class ToolsManager {
       {
         name: 'Switch Model',
         icon: fa_street_view,
-        callback: () => model.loadNextModel()
+        callback: () => {}
       },
       {
         name: 'Switch Texture',
         icon: fa_shirt,
-        callback: () => {
-          let successMessage = '', failMessage = '';
-          if (tips) {
-            successMessage = tips.message.changeSuccess;
-            failMessage = tips.message.changeFail;
-          }
-          model.loadRandTexture(successMessage, failMessage);
-        }
+        callback: () => { }
       },
       {
         name: 'Take Photo',
