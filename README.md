@@ -1,4 +1,19 @@
 # A fork of [Live2D Widget](https://github.com/stevenjoezhang/live2d-widget)
+## 完全基于本地单个模型的live2D Widget
+1. 增加了两个API接口： 
+   - 'changeTool'：修改工具
+   - 'showMessage'：展示聊天信息
+2. 修改了原先基于模型仓库的配置，只允许展示一个本地模型，使配置更简单
+3. 删除了原先的tips功能，只保留了看板娘的功能
+4. 修改了autoload的config内容
+
+| 选项             | 类型        | 默认值                                                                    | 说明                    |
+|----------------|-----------|------------------------------------------------------------------------|-----------------------|
+| `modelPath`    | `string`  | `/src/components/models/22`                                            | 指向单个模型的地址             |
+| `modelSetting` | `string`  | `index.json`                                                           | `modelPath`下模型配置文件的名称 |
+| `cubism2Path`  | `string`  | `https://fastly.jsdelivr.net/npm/live2d-widgets@1/dist/live2d.min.js`  | Cubism 2 Core 路径      |
+| `cubism5Path`  | `string`  | `https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js` | Cubism 5 Core 路径      |
+| `drag`         | `boolean` | `false`                                                                | 支持拖动看板娘               |
 
 
 ---

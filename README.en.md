@@ -1,4 +1,19 @@
 # A fork of [Live2D Widget](https://github.com/stevenjoezhang/live2d-widget)
+## Live2D Widget Based Entirely on a Single Local Model
+1. Added two API interfaces:
+   - `changeTool`: Modify tools
+   - `showMessage`: Display chat messages
+2. Modified the original configuration based on the model repository to only allow displaying a single local model, simplifying the configuration.
+3. Removed the original tips functionality, retaining only the virtual assistant functionality.
+4. Modified the `autoload` configuration content.
+
+| Option          | Type       | Default Value                                                           | Description                                            |
+|-----------------|------------|-------------------------------------------------------------------------|--------------------------------------------------------|
+| `modelPath`     | `string`   | `/src/components/models/22`                                             | Path to the single model                               |
+| `modelSetting`  | `string`   | `index.json`                                                            | Name of the model configuration file under `modelPath` |
+| `cubism2Path`   | `string`   | `https://fastly.jsdelivr.net/npm/live2d-widgets@1/dist/live2d.min.js`   | Path to Cubism 2 Core                                  |
+| `cubism5Path`   | `string`   | `https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js`  | Path to Cubism 5 Core                                  |
+| `drag`          | `boolean`  | `false`                                                                 | Support dragging the virtual assistant                 |
 
 ---
 The following part is the README file content of original repository:
