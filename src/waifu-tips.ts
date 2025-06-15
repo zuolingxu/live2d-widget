@@ -10,5 +10,7 @@ import { showMessage } from './message.js';
 
 // 暴露到 window 对象
 window.initWidget = initWidget;
-window.changeTool = ToolsManager.registerTool;
+window.changeTool = ToolsManager.changeTool;
+window.addTool = ToolsManager.addTool;
+window.removeTool = ToolsManager.removeTool;
 window.showMessage = showMessage;

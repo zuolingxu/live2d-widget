@@ -2,6 +2,8 @@
 ## Live2D Widget Based Entirely on a Single Local Model
 1. Added two API interfaces:
    - `changeTool`: Modify tools
+   - `addTool`: Add tools
+   - `removeTool`: Remove tools
    - `showMessage`: Display chat messages
 2. Modified the original configuration based on the model repository to only allow displaying a single local model, simplifying the configuration.
 3. Removed the original tips functionality, retaining only the virtual assistant functionality.

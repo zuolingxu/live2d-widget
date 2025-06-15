@@ -63,25 +63,6 @@ class ToolsManager {
         }
       },
       {
-        name: 'placeholder',
-        icon: fa_info_circle,
-        callback: () => {
-          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
-        }
-      },
-      {
-        name: 'placeholder',
-        icon: fa_info_circle,
-        callback: () => {
-          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
-        }
-      },      {
-        name: 'placeholder',
-        icon: fa_info_circle,
-        callback: () => {
-          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
-        }
-      },      {
         name: 'Info',
         icon: fa_info_circle,
         callback: () => {
@@ -108,7 +89,7 @@ class ToolsManager {
     ]
   }
 
-  addNewElement(pos: number, name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
+  addElement(pos: number, name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
     const element = document.createElement('span');
     element.id = `waifu-tool-${pos}`;
     element.title = name;
@@ -121,38 +102,45 @@ class ToolsManager {
     // Find the next tool position
     const nextTool = document.getElementById(`waifu-tool-${pos + 1}`);
 
-    // delete element first
-    const existingTool = document.getElementById(element.id);
-    if (existingTool) {
-      // Store the next sibling before removing
-      const insertBefore = existingTool.nextElementSibling;
-      existingTool.remove();
-
-      // Insert at the original position
-      toolContainer.insertBefore(element, insertBefore);
-    } else {
-      // If no existing tool, insert before the next tool or at the end
-      toolContainer.insertBefore(element, nextTool || null);
-    }
+    // If no existing tool, insert before the next tool or at the end
+    toolContainer.insertBefore(element, nextTool || null);
 
     return element;
+  }
+
+  deleteElement(pos: number) {
+    const element = document.getElementById(`waifu-tool-${pos}`);
+    if (element) {
+      element.remove();
+    } else {
+      console.warn(`Element with id waifu-tool-${pos} not found.`);
+    }
   }
 
   public loadTools() {
     for (let i = 0; i < this.tools.length; i++) {
       const { name, icon, callback } = this.tools[i];
-      this.addNewElement(i, name, icon, callback);
+      this.addElement(i, name, icon, callback);
     }
   }
 
-  public static registerTool(instance: ToolsManager, pos:number, new_tool: Tool) {
+  public static changeTool(instance: ToolsManager, pos:number, new_tool: Tool) {
     if (instance.tools[pos]) {
       console.log(`Overwriting tool at position ${pos}, previously: ${instance.tools[pos].name}`);
     }
     instance.tools[pos] =  new_tool;
-    instance.addNewElement(pos, new_tool.name, new_tool.icon, new_tool.callback);
+    instance.deleteElement(pos);
+    instance.addElement(pos, new_tool.name, new_tool.icon, new_tool.callback);
+  }
+
+  public static removeTool(instance: ToolsManager, pos: number) {
+    instance.deleteElement(pos);
+  }
+
+  public static addTool(instance: ToolsManager,pos: number, new_tool: Tool) {
+    instance.tools[pos] = new_tool;
+    instance.addElement(pos, new_tool.name, new_tool.icon, new_tool.callback);
   }
 }
-
 
 export { ToolsManager, Tool};

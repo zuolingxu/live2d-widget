@@ -20,9 +20,11 @@ interface Window {
    */
   initWidget: (config: Config) => void;
   /*
-   * Function to change the tool in the ToolsManager.
+   * Function to change the tools in the ToolsManager.
    */
   changeTool: (instance: ToolsManager , index: number, new_tool: any) => void;
+  addTool: (instance: ToolsManager, index: number ,tool: any) => void;
+  removeTool: (instance: ToolsManager, index: number) => void;
   /*
    * Function to show a message.
    * @param {string | string[]} text - Message text or array of texts.

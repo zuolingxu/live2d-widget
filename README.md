@@ -1,7 +1,9 @@
 # A fork of [Live2D Widget](https://github.com/stevenjoezhang/live2d-widget)
 ## 完全基于本地单个模型的live2D Widget
-1. 增加了两个API接口： 
+1. 增加了四个API接口： 
    - 'changeTool'：修改工具
+   - 'addTool'：添加工具
+   - 'removeTool'：删除工具
    - 'showMessage'：展示聊天信息
 2. 修改了原先基于模型仓库的配置，只允许展示一个本地模型，使配置更简单
 3. 删除了原先的tips功能，只保留了看板娘的功能
