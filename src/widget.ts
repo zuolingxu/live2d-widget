@@ -3,179 +3,18 @@
  * @module widget
  */
 
-import { ModelManager, Config, Model } from './model.js';
-import { showMessage, welcomeMessage, Time } from './message.js';
-import { randomSelection } from './utils.js';
+import { ModelManager, Config } from './model.js';
 import { ToolsManager } from './tools.js';
 import logger from './logger.js';
 import registerDrag from './drag.js';
 import { fa_child } from './icons.js';
 
 
-interface Tips {
-  /**
-   * Default message configuration.
-   */
-  message: {
-    /**
-     * Default message array.
-     * @type {string[]}
-     */
-    default: string[];
-    /**
-     * Console message.
-     * @type {string}
-     */
-    console: string;
-    /**
-     * Copy message.
-     * @type {string}
-     */
-    copy: string;
-    /**
-     * Visibility change message.
-     * @type {string}
-     */
-    visibilitychange: string;
-    changeSuccess: string;
-    changeFail: string;
-    photo: string;
-    goodbye: string;
-    hitokoto: string;
-    welcome: string;
-    referrer: string;
-    hoverBody: string;
-    tapBody: string;
-  };
-  /**
-   * Time configuration.
-   * @type {Time}
-   */
-  time: Time;
-  /**
-   * Mouseover message configuration.
-   * @type {Array<{selector: string, text: string | string[]}>}
-   */
-  mouseover: {
-    selector: string;
-    text: string | string[];
-  }[];
-  /**
-   * Click message configuration.
-   * @type {Array<{selector: string, text: string | string[]}>}
-   */
-  click: {
-    selector: string;
-    text: string | string[];
-  }[];
-  /**
-   * Season message configuration.
-   * @type {Array<{date: string, text: string | string[]}>}
-   */
-  seasons: {
-    date: string;
-    text: string | string[];
-  }[];
-  models: Model[];
-}
-
-/**
- * Register event listeners.
- * @param {Tips} tips - Result configuration.
- */
-function registerEventListener(tips: Tips) {
-  // Detect user activity and display messages when idle
-  let userAction = false;
-  let userActionTimer: any;
-  const messageArray = tips.message.default;
-  tips.seasons.forEach(({ date, text }) => {
-    const now = new Date(),
-      after = date.split('-')[0],
-      before = date.split('-')[1] || after;
-    if (
-      Number(after.split('/')[0]) <= now.getMonth() + 1 &&
-      now.getMonth() + 1 <= Number(before.split('/')[0]) &&
-      Number(after.split('/')[1]) <= now.getDate() &&
-      now.getDate() <= Number(before.split('/')[1])
-    ) {
-      text = randomSelection(text);
-      text = (text as string).replace('{year}', String(now.getFullYear()));
-      messageArray.push(text);
-    }
-  });
-  let lastHoverElement: any;
-  window.addEventListener('mousemove', () => (userAction = true));
-  window.addEventListener('keydown', () => (userAction = true));
-  setInterval(() => {
-    if (userAction) {
-      userAction = false;
-      clearInterval(userActionTimer);
-      userActionTimer = null;
-    } else if (!userActionTimer) {
-      userActionTimer = setInterval(() => {
-        showMessage(messageArray, 6000, 9);
-      }, 20000);
-    }
-  }, 1000);
-
-  window.addEventListener('mouseover', (event) => {
-    // eslint-disable-next-line prefer-const
-    for (let { selector, text } of tips.mouseover) {
-      if (!(event.target as HTMLElement)?.closest(selector)) continue;
-      if (lastHoverElement === selector) return;
-      lastHoverElement = selector;
-      text = randomSelection(text);
-      text = (text as string).replace(
-        '{text}',
-        (event.target as HTMLElement).innerText,
-      );
-      showMessage(text, 4000, 8);
-      return;
-    }
-  });
-  window.addEventListener('click', (event) => {
-    // eslint-disable-next-line prefer-const
-    for (let { selector, text } of tips.click) {
-      if (!(event.target as HTMLElement)?.closest(selector)) continue;
-      text = randomSelection(text);
-      text = (text as string).replace(
-        '{text}',
-        (event.target as HTMLElement).innerText,
-      );
-      showMessage(text, 4000, 8);
-      return;
-    }
-  });
-  window.addEventListener('live2d:hoverbody', () => {
-    const text = randomSelection(tips.message.hoverBody);
-    showMessage(text, 4000, 8, false);
-  });
-  window.addEventListener('live2d:tapbody', () => {
-    const text = randomSelection(tips.message.tapBody);
-    showMessage(text, 4000, 9);
-  });
-
-  const devtools = () => {};
-  console.log('%c', devtools);
-  devtools.toString = () => {
-    showMessage(tips.message.console, 6000, 9);
-  };
-  window.addEventListener('copy', () => {
-    showMessage(tips.message.copy, 6000, 9);
-  });
-  window.addEventListener('visibilitychange', () => {
-    if (!document.hidden)
-      showMessage(tips.message.visibilitychange, 6000, 9);
-  });
-}
-
 /**
  * Load the waifu widget.
  * @param {Config} config - Waifu configuration.
  */
 async function loadWidget(config: Config) {
-  logger.info('loadWidget function starts');
-
   localStorage.removeItem('waifu-display');
   sessionStorage.removeItem('waifu-message-priority');
   document.body.insertAdjacentHTML(
@@ -188,26 +27,11 @@ async function loadWidget(config: Config) {
        <div id="waifu-tool"></div>
      </div>`,
   );
-  let tips: Tips | null;
-
-  logger.info('main widget elements creating');
-
-  // EVENT TIPS REGISTER HERE
-  // if (config.modelPath) {
-  //   const response = await fetch(config.modelPath);
-  //   tips = await response.json();
-  //   registerEventListener(tips);
-  //   showMessage(welcomeMessage(tips.time, tips.message.welcome, tips.message.referrer), 7000, 11);
-  // }
-
-  logger.info('loading model and tools')
 
   const model = await ModelManager.newInstance(config);
   await model.loadModel('');
-  const tools = new ToolsManager(model, tips)
+  const tools = new ToolsManager()
   tools.loadTools();
-
-  logger.info('model and tools initialized');
 
   if (config.drag) registerDrag();
   document.getElementById('waifu')?.classList.add('waifu-active');
@@ -219,8 +43,6 @@ async function loadWidget(config: Config) {
  * @param {string | Config} config - Waifu configuration or configuration path.
  */
 function initWidget(config: Config) {
-  logger.info('init function starts');
-
   let globals;
   if (typeof config === 'string') {
     logger.error('Your config for Live2D initWidget is outdated. Please refer to https://github.com/stevenjoezhang/live2d-widget/blob/master/dist/autoload.js');
@@ -232,8 +54,6 @@ function initWidget(config: Config) {
        ${fa_child}
      </div>`,
   );
-
-  logger.info('toggle element creating');
   
   const toggle = document.getElementById('waifu-toggle');
   toggle?.addEventListener('click', () => {
@@ -251,8 +71,6 @@ function initWidget(config: Config) {
     }
   });
   
-  logger.info('toggle element created');
-  
   if (
     localStorage.getItem('waifu-display') &&
     Date.now() - Number(localStorage.getItem('waifu-display')) <= 86400000
@@ -266,8 +84,7 @@ function initWidget(config: Config) {
     globals = loadWidget(config as Config);
   }
 
-  logger.info('init function ends');
   return globals;
 }
 
-export { initWidget, Tips };
+export { initWidget };

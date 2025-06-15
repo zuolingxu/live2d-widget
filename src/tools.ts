@@ -6,15 +6,10 @@
 import {
   fa_comment,
   fa_paper_plane,
-  fa_street_view,
-  fa_shirt,
-  fa_camera_retro,
   fa_info_circle,
   fa_xmark
 } from './icons.js';
-import { showMessage, i18n } from './message.js';
-import type { ModelManager } from './model.js';
-import type { Tips } from './widget.js';
+
 
 interface Tool {
     /**
@@ -40,7 +35,7 @@ interface Tool {
 class ToolsManager {
   tools: Tool[];
 
-  constructor(model: ModelManager, tips: Tips) {
+  constructor() {
     this.tools = [
       /**
          * Tool list, each tool has a name, icon and callback function.
@@ -48,22 +43,12 @@ class ToolsManager {
          * @type {Tool[]}
          */
       {
-        name: 'Hitokoto',
+        name: 'chat',
         icon: fa_comment,
-        callback: async () => {
-          // Add hitokoto.cn API
-          const response = await fetch('https://v1.hitokoto.cn');
-          const result = await response.json();
-          const template = tips.message.hitokoto;
-          const text = i18n(template, result.from, result.creator);
-          showMessage(result.hitokoto, 6000, 9);
-          setTimeout(() => {
-            showMessage(text, 4000, 9);
-          }, 6000);
-        }
+        callback: async () => { }
       },
       {
-        name: 'Asteroids',
+        name: 'AsteroidsGame',
         icon: fa_paper_plane,
         callback: () => {
           if (window.Asteroids) {
@@ -78,10 +63,29 @@ class ToolsManager {
         }
       },
       {
+        name: 'placeholder',
+        icon: fa_info_circle,
+        callback: () => {
+          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
+        }
+      },
+      {
+        name: 'placeholder',
+        icon: fa_info_circle,
+        callback: () => {
+          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
+        }
+      },      {
+        name: 'placeholder',
+        icon: fa_info_circle,
+        callback: () => {
+          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
+        }
+      },      {
         name: 'Info',
         icon: fa_info_circle,
         callback: () => {
-          open('https://github.com/stevenjoezhang/live2d-widget');
+          open('https://github.com/zuolingxu/Interactive-Schedule-Planner');
         }
       },
       {
@@ -107,6 +111,7 @@ class ToolsManager {
   addNewElement(pos: number, name: string, icon: string, callback: (message: any) => void): HTMLSpanElement {
     const element = document.createElement('span');
     element.id = `waifu-tool-${pos}`;
+    element.title = name;
     element.innerHTML = icon;
     element.addEventListener('click', callback);
 

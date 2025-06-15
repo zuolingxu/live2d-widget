@@ -58,40 +58,4 @@ function showMessage(
   }, timeout);
 }
 
-/**
- * Show welcome message based on time.
- * @param {Time} time - Time message configuration.
- * @returns {string} Welcome message.
- */
-function welcomeMessage(time: Time, welcomeTemplate: string, referrerTemplate: string): string {
-  if (location.pathname === '/') {
-    // If on the homepage
-    for (const { hour, text } of time) {
-      const now = new Date(),
-        after = hour.split('-')[0],
-        before = hour.split('-')[1] || after;
-      if (
-        Number(after) <= now.getHours() &&
-        now.getHours() <= Number(before)
-      ) {
-        return text;
-      }
-    }
-  }
-  const text = i18n(welcomeTemplate, document.title);
-  if (document.referrer !== '') {
-    const referrer = new URL(document.referrer);
-    if (location.hostname === referrer.hostname) return text;
-    return `${i18n(referrerTemplate, referrer.hostname)}<br>${text}`;
-  }
-  return text;
-}
-
-function i18n(template: string, ...args: string[]) {
-  return template.replace(/\$(\d+)/g, (_, idx) => {
-    const i = parseInt(idx, 10) - 1;
-    return args[i] ?? '';
-  });
-}
-
-export { showMessage, welcomeMessage, i18n, Time };
+export { showMessage, Time };

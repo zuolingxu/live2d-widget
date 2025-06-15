@@ -7,7 +7,7 @@ import {showMessage} from './message.js';
 import {loadExternalResource} from './utils.js';
 import type Cubism2Model from './cubism2/index.js';
 import type {AppDelegate as Cubism5Model} from './cubism5/index.js';
-import logger, {LogLevel} from './logger.js';
+import logger from './logger.js';
 
 interface Model {
   name: string;
@@ -16,11 +16,6 @@ interface Model {
 }
 
 interface Config {
-  /**
-   * Path to the waifu configuration file.
-   * @type {string}
-   */
-  waifuPath: string;
   /**
    * Path to local model
    */
@@ -42,11 +37,6 @@ interface Config {
    * @type {boolean | undefined}
    */
   drag?: boolean;
-  /**
-   * Log level.
-   * @type {LogLevel | undefined}
-   */
-  logLevel?: LogLevel;
 }
 
 /**
@@ -115,9 +105,6 @@ class ModelManager {
   }
 
   async loadLive2D(modelSettingPath: string, modelSetting: object) {
-    logger.info(`loadLive2D start, modelSettingPath: ${modelSettingPath}
-    modelSetting: ${JSON.stringify(modelSetting)}`);
-
     if (this.loading) {
       logger.warn('Still loading. Abort.');
       return;
@@ -179,31 +166,10 @@ class ModelManager {
    * @param {string | string[]} message - Loading message.
    */
   async loadModel(message: string | string[]) {
-    logger.info('loadModel start');
     const modelSettingJson = await this.fetchWithCache(this.modelPath + this.modelSetting);
     await this.loadLive2D(this.modelPath, modelSettingJson);
     showMessage(message, 4000, 10);
-    logger.info('loadModel end');
   }
-
-  /**
-   * Load a random texture for the current model.
-   */
-  // async loadRandTexture(successMessage: string | string[] = '', failMessage: string | string[] = '') {
-  //   const { modelId } = this;
-  //   let noTextureAvailable = false;
-  //   if (this.models[modelId].paths.length === 1) {
-  //     noTextureAvailable = true;
-  //   } else {
-  //     this.modelTexturesId = randomOtherOption(this.models[modelId].paths.length, this.modelTexturesId);
-  //   }
-  //
-  //   if (noTextureAvailable) {
-  //     showMessage(failMessage, 4000, 10);
-  //   } else {
-  //     await this.loadModel(successMessage);
-  //   }
-  // }
 }
 
 export { ModelManager, Config, Model };
